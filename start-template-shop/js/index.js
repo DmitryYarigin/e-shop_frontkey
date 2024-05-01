@@ -15,17 +15,84 @@ import {
 
 const cards = document.querySelector('.cards');
 const btnShowCards = document.querySelector('.show-cards');
-let shownCards = COUNT_SHOW_CARDS_CLICK;
+let showCards = COUNT_SHOW_CARDS_CLICK;
 let countClickBtnShowCards = 1;
 let productsData = [];
 
+getProducts();
 
+console.log(btnShowCards);
 
+btnShowCards.addEventListener('click', sliceArrCards);
+cards.addEventListener('click', handleCardClick);
 
+async function getProducts() {
+    try { 
+        if (!productsData.length) {
+            const res = await fetch('./data/products.json');
+            if (!res.ok) {
+                throw new Error(res.statusText)
+            }
+            productsData = await res.json();
+        }
+        console.log(productsData);
 
+        if ((productsData.length > COUNT_SHOW_CARDS_CLICK) &&
+            btnShowCards.classList.contains('none')) {
+                btnShowCards.classList.remove('none');
+            }
 
+        renderStartPage(productsData);
+    }
 
+    catch (err) {
+        showErrorMessage(ERROR_SERVER);
+        console.log(err);
+    }
+}
 
+function renderStartPage(data) {
+    if (!data || !data.length) {
+        showErrorMessage(NO_PRODUCTS_IN_THIS_CATEGORY);
+        return
+    }
+
+    const arrCards = data.slice(0, COUNT_SHOW_CARDS_CLICK);
+    createCards(arrCards);
+}
+
+function sliceArrCards() {
+    if (showCards >= productsData.length) return;
+    console.log(showCards);
+    countClickBtnShowCards++;
+    const countShowCards = COUNT_SHOW_CARDS_CLICK * countClickBtnShowCards;
+    const arrCards = productsData.slice(showCards, countShowCards);
+    console.log(countShowCards);
+    createCards(arrCards);
+
+    showCards = cards.children.length;
+    console.log(showCards);
+
+    if(showCards >= productsData.length) {
+        btnShowCards.classList.add('none');
+    }
+}
+
+function handleCardClick (event) {
+    const targetButton = event.target.closest('.card__add');
+    console.log(targetButton);
+    if (!targetButton) return;
+    const card = targetButton.closest('.card');
+    console.log(card);
+    const id = card.dataset.productId;
+    const basket = getBasketLocalStorage();
+    
+    if (basket.includes(id)) return;
+
+    basket.push(id);
+    setBasketLocalStorage(basket);
+    checkingActiveButtons(basket);
+}
 
 
 // Рендер карточки
@@ -58,6 +125,7 @@ function createCards(data) {
         cards.insertAdjacentHTML('beforeend', cardItem);
 	});
 }
+
 
 
 
